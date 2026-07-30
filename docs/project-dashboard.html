@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ADAGE CRM Intelligence — Project Map</title>
+<style>
+  :root{
+    --bg:#F7F7FA; --surface:#FFFFFF; --surface-alt:#F9F9FB;
+    --border:#E5E7EB; --border-md:#D1D5DB;
+    --ink:#111827; --ink-soft:#4B5563; --muted:#9CA3AF;
+    --teal:#02818A; --teal-hover:#026E76; --teal-soft:#E6F4F5; --teal-bdr:#9DD0D4;
+    --indigo:#6366F1; --indigo-soft:#EEF0FF;
+    --good:#059669; --good-soft:#D1FAE5;
+    --warn:#D97706; --warn-soft:#FEF3C7;
+    --bad:#DC2626; --bad-soft:#FEE2E2;
+    --shadow-sm:0 1px 3px rgba(17,24,39,.07),0 1px 2px rgba(17,24,39,.04);
+    --shadow-md:0 10px 28px rgba(17,24,39,.10);
+    --radius-card:14px; --radius-pill:100px;
+    --font-display:"Segoe UI Semibold","Segoe UI",-apple-system,"Helvetica Neue",Arial,sans-serif;
+    --font-body:"Segoe UI",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+    --font-mono:ui-monospace,"Cascadia Code","SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0E1416; --surface:#161D20; --surface-alt:#1B2327;
+      --border:#293134; --border-md:#374045;
+      --ink:#EDF0F1; --ink-soft:#AEB8BC; --muted:#78848A;
+      --teal:#22B8C2; --teal-hover:#4FCBD3; --teal-soft:#123236; --teal-bdr:#1F5257;
+      --indigo:#9AA0FF; --indigo-soft:#1D1F33;
+      --good:#34D399; --good-soft:#0E2C22;
+      --warn:#FBBF48; --warn-soft:#2E230C;
+      --bad:#F87171; --bad-soft:#341417;
+      --shadow-sm:0 1px 3px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.3);
+      --shadow-md:0 14px 32px rgba(0,0,0,.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0E1416; --surface:#161D20; --surface-alt:#1B2327;
+    --border:#293134; --border-md:#374045;
+    --ink:#EDF0F1; --ink-soft:#AEB8BC; --muted:#78848A;
+    --teal:#22B8C2; --teal-hover:#4FCBD3; --teal-soft:#123236; --teal-bdr:#1F5257;
+    --indigo:#9AA0FF; --indigo-soft:#1D1F33;
+    --good:#34D399; --good-soft:#0E2C22;
+    --warn:#FBBF48; --warn-soft:#2E230C;
+    --bad:#F87171; --bad-soft:#341417;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.35),0 1px 2px rgba(0,0,0,.3);
+    --shadow-md:0 14px 32px rgba(0,0,0,.45);
+  }
+  :root[data-theme="light"]{
+    --bg:#F7F7FA; --surface:#FFFFFF; --surface-alt:#F9F9FB;
+    --border:#E5E7EB; --border-md:#D1D5DB;
+    --ink:#111827; --ink-soft:#4B5563; --muted:#9CA3AF;
+    --teal:#02818A; --teal-hover:#026E76; --teal-soft:#E6F4F5; --teal-bdr:#9DD0D4;
+    --indigo:#6366F1; --indigo-soft:#EEF0FF;
+    --good:#059669; --good-soft:#D1FAE5;
+    --warn:#D97706; --warn-soft:#FEF3C7;
+    --bad:#DC2626; --bad-soft:#FEE2E2;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-body); line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--teal-soft); color:var(--teal); }
+  a{ color:var(--teal); }
+  h1,h2,h3,h4{ font-family:var(--font-display); text-wrap:balance; margin:0; color:var(--ink); }
+  p{ margin:0; }
+  .mono{ font-family:var(--font-mono); }
+  .wrap{ max-width:1120px; margin:0 auto; padding:0 28px; }
+  .container-scroll{ overflow-x:auto; }
+
+  /* ---- nav ---- */
+  nav.topnav{
+    position:sticky; top:0; z-index:50;
+    background:color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+  }
+  .navrow{ display:flex; align-items:center; justify-content:space-between; height:58px; gap:16px; }
+  .brand{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .brand-mark{
+    width:26px; height:26px; border-radius:7px;
+    background:linear-gradient(135deg,var(--teal),#04A8B4);
+    flex-shrink:0;
+  }
+  .brand-text{ display:flex; flex-direction:column; line-height:1.1; }
+  .brand-text b{ font-family:var(--font-display); font-size:14px; letter-spacing:.2px; }
+  .brand-text span{ font-size:9px; letter-spacing:1.6px; text-transform:uppercase; color:var(--muted); font-weight:700; }
+  .navlinks{ display:flex; gap:2px; flex-wrap:nowrap; overflow-x:auto; }
+  .navlinks a{
+    text-decoration:none; color:var(--ink-soft); font-size:12.5px; font-weight:600;
+    padding:7px 12px; border-radius:8px; border:1px solid transparent; white-space:nowrap;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .navlinks a:hover{ background:var(--teal-soft); color:var(--teal); }
+  .navlinks a.active{ background:var(--teal-soft); color:var(--teal); border-color:var(--teal-bdr); }
+
+  /* ---- hero ---- */
+  .hero{ padding:56px 0 40px; border-bottom:1px solid var(--border); }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:11px; font-weight:700; letter-spacing:1.1px; text-transform:uppercase;
+    color:var(--teal); background:var(--teal-soft); border:1px solid var(--teal-bdr);
+    padding:5px 12px; border-radius:var(--radius-pill); margin-bottom:18px;
+  }
+  .eyebrow::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--teal); }
+  .hero h1{ font-size:clamp(30px,4.2vw,44px); font-weight:700; letter-spacing:-.5px; max-width:16ch; }
+  .hero .lede{ margin-top:16px; font-size:16.5px; color:var(--ink-soft); max-width:62ch; }
+  .hero .lede b{ color:var(--ink); }
+
+  .stat-strip{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-top:32px; }
+  .stat-tile{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-card);
+    padding:16px 16px; box-shadow:var(--shadow-sm);
+  }
+  .stat-tile .n{ font-family:var(--font-display); font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .stat-tile .l{ font-size:11.5px; color:var(--muted); margin-top:4px; line-height:1.3; }
+
+  /* ---- sections ---- */
+  section{ padding:52px 0; border-bottom:1px solid var(--border); }
+  section:last-of-type{ border-bottom:none; }
+  .section-head{ margin-bottom:28px; max-width:70ch; }
+  .kicker{ font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; color:var(--teal); margin-bottom:8px; }
+  .section-head h2{ font-size:26px; letter-spacing:-.3px; }
+  .section-head p{ margin-top:10px; color:var(--ink-soft); font-size:14.5px; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-card);
+    box-shadow:var(--shadow-sm); transition:box-shadow .2s,border-color .2s;
+  }
+  .card:hover{ box-shadow:var(--shadow-md); border-color:var(--border-md); }
+
+  /* ---- architecture ---- */
+  .arch-flow{ display:flex; align-items:stretch; gap:0; margin-bottom:24px; }
+  .arch-node{
+    flex:1; padding:20px; display:flex; flex-direction:column; gap:6px; justify-content:center;
+  }
+  .arch-node .t{ font-family:var(--font-display); font-weight:700; font-size:14.5px; }
+  .arch-node .d{ font-size:12.5px; color:var(--muted); line-height:1.45; }
+  .arch-arrow{
+    display:flex; align-items:center; justify-content:center; width:56px; flex-shrink:0;
+    color:var(--muted); font-size:20px;
+  }
+  .model-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .model-card{ padding:16px; }
+  .model-card .tag{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px; background:var(--indigo-soft);
+    color:var(--indigo); padding:2px 8px; border-radius:6px; margin-bottom:9px;
+  }
+  .model-card .t{ font-weight:700; font-size:13.5px; margin-bottom:4px; }
+  .model-card .d{ font-size:12px; color:var(--muted); line-height:1.4; }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+  .chip{
+    font-size:11.5px; font-weight:600; color:var(--ink-soft); background:var(--surface-alt);
+    border:1px solid var(--border); padding:5px 12px; border-radius:var(--radius-pill);
+  }
+
+  /* ---- views grid ---- */
+  .views-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .view-card{ padding:22px; display:flex; flex-direction:column; gap:12px; }
+  .view-card .vh{ display:flex; align-items:center; gap:10px; }
+  .view-icon{
+    width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; font-size:16px;
+  }
+  .view-card .vh .name{ font-family:var(--font-display); font-weight:700; font-size:15.5px; }
+  .view-card .vh .sub{ font-size:11px; color:var(--muted); }
+  .view-card .desc{ font-size:13px; color:var(--ink-soft); }
+  .feat-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .feat-list li{ display:flex; gap:8px; font-size:12.5px; color:var(--ink-soft); }
+  .feat-list li::before{ content:"—"; color:var(--muted); flex-shrink:0; }
+  .field-note{
+    margin-top:auto; padding-top:12px; border-top:1px dashed var(--border);
+    font-family:var(--font-mono); font-size:10.5px; color:var(--muted); line-height:1.6;
+  }
+
+  /* ---- health section ---- */
+  .health-layout{ display:grid; grid-template-columns:280px 1fr; gap:24px; align-items:start; }
+  .gauge-card{ padding:24px; text-align:center; }
+  .gauge-value{ font-family:var(--font-display); font-size:34px; font-weight:700; margin-top:6px; font-variant-numeric:tabular-nums; }
+  .gauge-tier{ font-size:13px; font-weight:700; color:var(--warn); margin-top:2px; }
+  .gauge-reason{ font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5; }
+  .gauge-tooltip-hint{
+    margin-top:14px; font-size:10.5px; color:var(--muted); border-top:1px solid var(--border);
+    padding-top:12px;
+  }
+
+  .health-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+  .health-table th{
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted);
+    font-weight:700; padding:0 10px 8px; border-bottom:1px solid var(--border);
+  }
+  .health-table td{ padding:10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .health-table tr:last-child td{ border-bottom:none; }
+  .tier-tag{
+    display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:var(--radius-pill);
+    white-space:nowrap;
+  }
+  .health-table .reason{ color:var(--ink-soft); }
+  .health-table .reason .branch{ display:block; font-size:11px; color:var(--muted); margin-top:2px; }
+
+  /* ---- design system ---- */
+  .design-grid{ display:grid; grid-template-columns:1.1fr .9fr; gap:20px; }
+  .swatch-row{ display:flex; flex-wrap:wrap; gap:10px; }
+  .swatch{
+    display:flex; flex-direction:column; gap:8px; width:104px;
+  }
+  .swatch .sq{ width:100%; height:52px; border-radius:10px; border:1px solid var(--border); }
+  .swatch .name{ font-size:11px; font-weight:700; }
+  .swatch .hex{ font-family:var(--font-mono); font-size:10px; color:var(--muted); }
+  .region-grid{ display:flex; flex-wrap:wrap; gap:8px; }
+  .region-pill{
+    font-size:11px; font-weight:700; padding:4px 11px; border-radius:var(--radius-pill); color:#fff;
+  }
+  .principle-list{ display:flex; flex-direction:column; gap:14px; }
+  .principle{ padding-left:14px; border-left:3px solid var(--teal); }
+  .principle .t{ font-weight:700; font-size:13px; }
+  .principle .d{ font-size:12px; color:var(--muted); margin-top:2px; line-height:1.5; }
+
+  /* ---- timeline ---- */
+  .timeline{ position:relative; padding-left:26px; }
+  .timeline::before{ content:""; position:absolute; left:5px; top:6px; bottom:6px; width:2px; background:var(--border); }
+  .tl-item{ position:relative; padding-bottom:26px; }
+  .tl-item:last-child{ padding-bottom:0; }
+  .tl-item::before{
+    content:""; position:absolute; left:-26px; top:3px; width:11px; height:11px; border-radius:50%;
+    background:var(--surface); border:2.5px solid var(--teal);
+  }
+  .tl-date{ font-family:var(--font-mono); font-size:11px; color:var(--teal); font-weight:700; }
+  .tl-title{ font-weight:700; font-size:14px; margin-top:3px; }
+  .tl-desc{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; max-width:64ch; }
+  .tl-files{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+  .tl-files span{
+    font-family:var(--font-mono); font-size:10px; color:var(--muted); background:var(--surface-alt);
+    border:1px solid var(--border); padding:2px 7px; border-radius:5px;
+  }
+
+  footer{ padding:32px 0 56px; }
+  footer p{ font-size:12px; color:var(--muted); }
+
+  @media (max-width: 860px){
+    .navlinks{ display:none; }
+    .stat-strip{ grid-template-columns:repeat(2,1fr); }
+    .views-grid, .model-grid, .design-grid{ grid-template-columns:1fr; }
+    .health-layout{ grid-template-columns:1fr; }
+    .arch-flow{ flex-direction:column; }
+    .arch-arrow{ width:100%; height:28px; transform:rotate(90deg); }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ transition:none !important; scroll-behavior:auto !important; } }
+  html{ scroll-behavior:smooth; }
+  a:focus-visible, button:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="wrap navrow">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text"><b>ADAGE CRM</b><span>Project Map</span></div>
+    </div>
+    <div class="navlinks" id="navlinks">
+      <a href="#overview">Overview</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#views">Views</a>
+      <a href="#health">Prospect Health</a>
+      <a href="#design">Design System</a>
+      <a href="#timeline">Build Log</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" id="overview">
+  <div class="eyebrow">Internal tool · Adage Automation</div>
+  <h1>A read‑only intelligence layer over Odoo CRM</h1>
+  <p class="lede">
+    ADAGE CRM Intelligence is a small React dashboard that sits in front of an existing
+    Odoo CRM instance. It doesn't replace Odoo as the system of record — it re‑reads
+    <b>opportunities</b> and <b>site‑visit engagement logs</b> and turns them into four
+    purpose‑built views for sales leadership: a working pipeline, a visit tracker,
+    a team activity board, and a per‑lead <b>prospect‑health score</b> — across regions
+    spanning North, South, East, West, and export accounts.
+  </p>
+
+  <div class="stat-strip">
+    <div class="stat-tile"><div class="n">4</div><div class="l">working views — Pipeline, Visits, Team, Calendar</div></div>
+    <div class="stat-tile"><div class="n">2</div><div class="l">Odoo models joined — <span class="mono">crm.lead</span> + a custom engagement‑tracker line</div></div>
+    <div class="stat-tile"><div class="n">9</div><div class="l">prospect‑health tiers, Poor → Excellent, plus Regret</div></div>
+    <div class="stat-tile"><div class="n">0</div><div class="l">chart libraries — every donut, bar and gauge is hand‑drawn SVG</div></div>
+    <div class="stat-tile"><div class="n">15</div><div class="l">iterative spec prompts shaped this build, Jun 10 – Jul 7</div></div>
+  </div>
+</header>
+
+<section class="wrap" id="architecture">
+  <div class="section-head">
+    <div class="kicker">Architecture</div>
+    <h2>Odoo stays the source of truth</h2>
+    <p>The app never talks to Odoo directly from the browser. A thin proxy holds the credentials
+       server‑side and forwards JSON‑RPC calls, so the dashboard is safe to deploy publicly
+       without ever shipping an API key to the client.</p>
+  </div>
+
+  <div class="card container-scroll">
+    <div class="arch-flow" style="min-width:640px;">
+      <div class="arch-node">
+        <div class="t">React SPA</div>
+        <div class="d"><span class="mono">fetchOdoo(model, method, args)</span> — Vite + inline‑styled components, no state library, no chart library</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="background:var(--teal-soft); border-radius:10px;">
+        <div class="t" style="color:var(--teal);">Serverless proxy</div>
+        <div class="d"><span class="mono">vite-odoo-proxy.js</span> in dev, <span class="mono">api/odoo.js</span> on Vercel — HTTP Basic auth (<span class="mono">login:apikey</span>), credentials never reach the browser, sidesteps CORS entirely</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="t">Odoo CRM</div>
+        <div class="d">JSON‑RPC <span class="mono">search_read</span> over live opportunity, engagement, stage and employee data</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="model-grid" style="margin-top:16px;">
+    <div class="card model-card">
+      <span class="tag">crm.lead</span>
+      <div class="t">Opportunities</div>
+      <div class="d">Revenue, stage, region, salesperson, closing dates, prospect‑health score — the backbone of the Pipeline view.</div>
+    </div>
+    <div class="card model-card">
+      <span class="tag">x_crm_lead_line_6bc5b</span>
+      <div class="t">Engagement tracker</div>
+      <div class="d">Custom Studio child model — one row per email, call, meeting or exhibition logged against a lead.</div>
+    </div>
+    <div class="card model-card">
+      <span class="tag">crm.stage</span>
+      <div class="t">Pipeline stages</div>
+      <div class="d">Ordered stage list used for the Kanban columns and the revenue‑by‑stage donut.</div>
+    </div>
+    <div class="card model-card">
+      <span class="tag">hr.employee</span>
+      <div class="t">People</div>
+      <div class="d">Resolves the raw assignee IDs on engagement rows into display names once per load.</div>
+    </div>
+  </div>
+
+  <div class="chip-row">
+    <span class="chip">React 18</span><span class="chip">Vite 5</span><span class="chip">Vercel serverless functions</span>
+    <span class="chip">No Redux / Zustand</span><span class="chip">No Recharts / D3</span><span class="chip">Inline‑styled components</span>
+    <span class="chip">₹ Cr / L / K revenue formatting</span>
+  </div>
+</section>
+
+<section class="wrap" id="views">
+  <div class="section-head">
+    <div class="kicker">The four tabs</div>
+    <h2>One dataset, four jobs</h2>
+    <p>Leads and engagements are fetched once in <span class="mono">App.jsx</span> and handed down —
+       each tab is a different lens on the same records, not a separate data source.</p>
+  </div>
+
+  <div class="views-grid">
+    <div class="card view-card">
+      <div class="vh">
+        <div class="view-icon" style="background:var(--teal-soft); color:var(--teal);">◫</div>
+        <div><div class="name">Pipeline</div><div class="sub">crm.lead · default tab</div></div>
+      </div>
+      <p class="desc">The working opportunity board — list or kanban, grouped and charted.</p>
+      <ul class="feat-list">
+        <li>List / Kanban toggle; groups by Region, Person or Stage</li>
+        <li>"Active Only" filter on <span class="mono">x_studio_lead_status</span>, on by default</li>
+        <li>Revenue‑by‑stage donut + projected monthly closings bar, both raw SVG</li>
+        <li>Closing‑date urgency coloring: overdue / due ≤2 days / due this week</li>
+        <li>Click a row to expand an inline detail panel with a "View in Odoo →" deep link</li>
+      </ul>
+      <div class="field-note">x_studio_responsible_region_1 · x_studio_assigned_salesperson · x_studio_tentative_finalization_date · x_studio_prospect_health</div>
+    </div>
+
+    <div class="card view-card">
+      <div class="vh">
+        <div class="view-icon" style="background:var(--indigo-soft); color:var(--indigo);">✉</div>
+        <div><div class="name">Visits</div><div class="sub">engagement tracker</div></div>
+      </div>
+      <p class="desc">The activity log — every touchpoint a salesperson has logged against a lead.</p>
+      <ul class="feat-list">
+        <li>Four engagement types: Email, Phone Call, Meeting, Exhibition</li>
+        <li>Status pills: Planned / Completed / Rescheduled / Cancelled</li>
+        <li>Displays the date that actually matters per status (proposed vs. rescheduled vs. completed)</li>
+        <li>Multi‑select filters + urgency‑bordered rows, same visual language as Pipeline</li>
+      </ul>
+      <div class="field-note">x_studio_engagement_type · x_studio_engagement_status · x_studio_proposed_date · x_studio_visit_by</div>
+    </div>
+
+    <div class="card view-card">
+      <div class="vh">
+        <div class="view-icon" style="background:var(--good-soft); color:var(--good);">☰</div>
+        <div><div class="name">Team View</div><div class="sub">person × region</div></div>
+      </div>
+      <p class="desc">Who is covering what, and what's due this week — a manager's lens.</p>
+      <ul class="feat-list">
+        <li>Person × region pivot of planned visits, with drill‑down: All People → Person → single engagement</li>
+        <li>Breadcrumb navigation between the three drill levels</li>
+        <li>"This Week's Planned Activities" grouped by assignee</li>
+        <li>Priority‑sorted: overdue, then due ≤2 days, then due this week</li>
+      </ul>
+      <div class="field-note">x_studio_visit_by → hr.employee.name · getWeekRange() Mon–Sun</div>
+    </div>
+
+    <div class="card view-card">
+      <div class="vh">
+        <div class="view-icon" style="background:var(--warn-soft); color:var(--warn);">▦</div>
+        <div><div class="name">Calendar</div><div class="sub">swimlane, one row per person</div></div>
+      </div>
+      <p class="desc">A day‑by‑day swimlane — where site visits actually land on the calendar.</p>
+      <ul class="feat-list">
+        <li>One lane per salesperson; solid pill = proposed date, dashed pill = follow‑up date</li>
+        <li>A thin status‑colored line bridges a proposed date to its follow‑up date</li>
+        <li>Click any day to pop up that day's full engagement list</li>
+        <li>Activity‑type icon legend: ✉ 📞 🤝 🏛️ 📌</li>
+      </ul>
+      <div class="field-note">x_studio_next_follow_up_date · x_studio_rescheduled_date</div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="health">
+  <div class="section-head">
+    <div class="kicker">Domain logic spotlight</div>
+    <h2>The prospect‑health score</h2>
+    <p>The single most bespoke piece of logic in the app. Odoo computes a raw tier per lead
+       from closing‑date proximity plus activity state; the dashboard turns that tier into a
+       gauge, a colored tag with a <em>reason</em>, and a filtered‑set aggregate.</p>
+  </div>
+
+  <div class="health-layout">
+    <div class="card gauge-card">
+      <svg viewBox="0 0 200 120" width="220" height="132" style="overflow:visible;">
+        <defs>
+          <linearGradient id="healthGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#DC2626"/>
+            <stop offset="33.33%" stop-color="#FACC15"/>
+            <stop offset="66.66%" stop-color="#4ADE80"/>
+            <stop offset="100%" stop-color="#15803D"/>
+          </linearGradient>
+        </defs>
+        <path d="M 20 105 A 80 80 0 0 1 180 105" fill="none" stroke="url(#healthGrad)" stroke-width="16" stroke-linecap="round"/>
+        <g transform="translate(100,105) rotate(-56.99)">
+          <rect x="-2.5" y="-72" width="5" height="60" rx="2.5" fill="var(--ink-soft)"/>
+        </g>
+        <circle cx="100" cy="105" r="7" fill="var(--ink-soft)"/>
+      </svg>
+      <div class="gauge-value">19.6</div>
+      <div class="gauge-tier">Between Poor and Average</div>
+      <div class="gauge-reason">Missed Opportunity <br/>(6 no action, 2 attempted)</div>
+      <div class="gauge-tooltip-hint">↳ average of <span class="mono">x_studio_prospect_health</span> across the currently filtered leads — Regret &amp; unscored leads excluded. Hover the real gauge for the full methodology.</div>
+    </div>
+
+    <div class="card" style="padding:22px;">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); font-weight:700; margin-bottom:12px;">Row‑level tag — same tier, two possible reasons</div>
+      <div class="container-scroll">
+      <table class="health-table" style="min-width:560px;">
+        <thead><tr><th>Tier</th><th>Position</th><th>Reason shown (depends on completed activity)</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tier-tag" style="background:#FEE2E2;color:#DC2626;">Poor</span></td><td class="mono">0</td>
+            <td class="reason">Missed Opportunity without any action</td></tr>
+          <tr><td><span class="tier-tag" style="background:#FFEDD5;color:#F97316;">Between Poor &amp; Average</span></td><td class="mono">16.67</td>
+            <td class="reason">No activity: <span class="branch">Missed Opportunity without any action</span>Completed: <span class="branch">Missed Opportunity despite Sales attempts</span></td></tr>
+          <tr><td><span class="tier-tag" style="background:#FEF9C3;color:#CA8A04;">Average</span></td><td class="mono">33.33</td>
+            <td class="reason">No activity: <span class="branch">Pending Sales Action</span>Completed: <span class="branch">Missed Opportunity despite Sales attempts</span></td></tr>
+          <tr><td><span class="tier-tag" style="background:#ECFCCB;color:#65A30D;">Between Average &amp; Good</span></td><td class="mono">50</td>
+            <td class="reason">No activity: <span class="branch">Pending Sales Action</span>Completed: <span class="branch">Close to Due Date</span></td></tr>
+          <tr><td><span class="tier-tag" style="background:#DCFCE7;color:#16A34A;">Good</span></td><td class="mono">66.67</td>
+            <td class="reason">Prospect On Track</td></tr>
+          <tr><td><span class="tier-tag" style="background:#DCFCE7;color:#15803D;">Very Good</span></td><td class="mono">83.33</td>
+            <td class="reason">Prospect On Track</td></tr>
+          <tr><td><span class="tier-tag" style="background:#DCFCE7;color:#166534;">Excellent</span></td><td class="mono">100</td>
+            <td class="reason">Prospect Resulted in RFQ</td></tr>
+          <tr><td><span class="tier-tag" style="background:#F3F4F6;color:#6B7280;">Regret</span></td><td class="mono">excluded</td>
+            <td class="reason">Manually marked lost — reason still branches on completed activity</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div style="margin-top:14px; font-size:12px; color:var(--muted); line-height:1.6;">
+        Color always follows the health <em>tier</em>; the label text follows the tier <b>plus</b>
+        <span class="mono">hasCompletedActivity()</span> — so "Between Poor and Average" with no logged
+        activity reads identically in color to the version with a completed call, but the sentence
+        next to it changes. This replaced an earlier per‑row speedometer gauge (kept only in the
+        aggregate header card above) because a full gauge per list row was too heavy for a scanning list.
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="design">
+  <div class="section-head">
+    <div class="kicker">Visual language</div>
+    <h2>Make.com‑inspired, Adage‑teal</h2>
+    <p>A June 2026 retheme moved the app off a generic indigo palette onto Adage's own brand
+       teal, borrowing Make.com's light, shadow‑not‑border SaaS surface language.</p>
+  </div>
+
+  <div class="design-grid">
+    <div class="card" style="padding:22px;">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); font-weight:700; margin-bottom:14px;">Core tokens</div>
+      <div class="swatch-row">
+        <div class="swatch"><div class="sq" style="background:#02818A;"></div><div class="name">Brand teal</div><div class="hex">#02818A</div></div>
+        <div class="swatch"><div class="sq" style="background:#E6F4F5;"></div><div class="name">Teal tint</div><div class="hex">#E6F4F5</div></div>
+        <div class="swatch"><div class="sq" style="background:#111827;"></div><div class="name">Ink</div><div class="hex">#111827</div></div>
+        <div class="swatch"><div class="sq" style="background:#F7F7FA; border-color:#D1D5DB;"></div><div class="name">Page bg</div><div class="hex">#F7F7FA</div></div>
+        <div class="swatch"><div class="sq" style="background:#DC2626;"></div><div class="name">Overdue</div><div class="hex">#DC2626</div></div>
+        <div class="swatch"><div class="sq" style="background:#F59E0B;"></div><div class="name">Due soon</div><div class="hex">#F59E0B</div></div>
+      </div>
+
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); font-weight:700; margin:22px 0 12px;">Region identity</div>
+      <div class="region-grid">
+        <span class="region-pill" style="background:#4F8EF7;">North</span>
+        <span class="region-pill" style="background:#F7924F;">South</span>
+        <span class="region-pill" style="background:#059669;">East</span>
+        <span class="region-pill" style="background:#7C3AED;">West</span>
+        <span class="region-pill" style="background:#DB2777;">AKAI</span>
+        <span class="region-pill" style="background:#EA580C;">AKIC</span>
+        <span class="region-pill" style="background:#047857;">Bangalore</span>
+        <span class="region-pill" style="background:#2563EB;">Chennai</span>
+        <span class="region-pill" style="background:#D97706;">Hyderabad</span>
+        <span class="region-pill" style="background:#DC2626;">JSR</span>
+        <span class="region-pill" style="background:#64748B;">Export</span>
+      </div>
+    </div>
+
+    <div class="card" style="padding:22px;">
+      <div style="font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); font-weight:700; margin-bottom:14px;">Conventions</div>
+      <div class="principle-list">
+        <div class="principle"><div class="t">Shadow over border</div><div class="d">Cards float on <span class="mono">box-shadow</span>, not heavy outlines — the Make.com cue.</div></div>
+        <div class="principle"><div class="t">Semantic urgency is fixed</div><div class="d">#EF4444 / #FF9933 / #F59E0B for overdue / urgent / soon, hardcoded on purpose across every tab.</div></div>
+        <div class="principle"><div class="t">Tinted pills, no hard border</div><div class="d">Status and project‑type tags use a soft background + matching text color, radius 100.</div></div>
+        <div class="principle"><div class="t">12px card radius, 100px pill radius</div><div class="d">The only two radii in the system; buttons sit at 8px.</div></div>
+        <div class="principle"><div class="t">One accent, used sparingly</div><div class="d">Teal is reserved for interactive/active state — region and person color scales carry identity elsewhere.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="timeline">
+  <div class="section-head">
+    <div class="kicker">How it was built</div>
+    <h2>A spec‑driven build log</h2>
+    <p>Every feature in this app began as a structured markdown prompt in <span class="mono">/prompts</span>,
+       written for an AI implementation pass rather than as free‑form notes — the files below are
+       ordered by their actual file dates.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-date">10 Jun 2026</div>
+      <div class="tl-title">Four‑tab foundation</div>
+      <div class="tl-desc">The initial batch of specs — Pipeline and Team feature specs, the first Pipeline improvements pass, the Visits redesign, the Swimlane prompt and its follow‑up improvements, the List/Kanban toggle, and a general refactor pass. This is where the app's current tab structure was locked in.</div>
+      <div class="tl-files">
+        <span>PipelineTab_Feature_Spec.md</span><span>TeamTab_Feature_Spec.md</span><span>PipelineTab_Improvements.md</span>
+        <span>kiro-visits-tab-redesign.md</span><span>kiro_swimlane_prompt.md</span><span>kiro_swimlane_improvements.md</span>
+        <span>kiro_list_view_toggle.md</span><span>kiro-refactor-prompt.md</span>
+      </div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">19 Jun 2026</div>
+      <div class="tl-title">Make.com‑inspired retheme</div>
+      <div class="tl-desc">Replaced the generic indigo theme tokens with Adage brand teal (#02818A), shadow‑based cards, and tinted status pills — the visual language the app still uses today.</div>
+      <div class="tl-files"><span>retheme-make-com-inspired.md</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">1 Jul 2026</div>
+      <div class="tl-title">Pipeline UX pass + chart correction</div>
+      <div class="tl-desc">Rebuilt list rows around urgency badges and an activity description, collapsed a two‑row filter bar into one; a same‑day addendum corrected the donut chart, followed by a broader corrective redesign pass.</div>
+      <div class="tl-files"><span>ADAPT_Pipeline_UX_Redesign.md</span><span>ADAPT_Donut_Chart_Redesign_Addendum.md</span><span>ADAPT_Corrective_Redesign_v2.md</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">6 Jul 2026</div>
+      <div class="tl-title">Prospect‑health speedometer, v1</div>
+      <div class="tl-desc">Introduced <span class="mono">x_studio_prospect_health</span> as a per‑row gauge — a semicircle needle over a red‑to‑green gradient, with a fully greyed‑out state for "Regret" leads.</div>
+      <div class="tl-files"><span>Kiro_Prompt_Prospect_Health_Speedometer.md</span></div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-date">7 Jul 2026</div>
+      <div class="tl-title">Tags replace the per‑row gauge</div>
+      <div class="tl-desc">Swapped the row‑level speedometer for a compact color‑coded reason tag (kept the gauge only in the aggregate header card), and gave that header card a methodology tooltip and attempted/no‑action counts.</div>
+      <div class="tl-files"><span>Kiro_Prompt_Prospect_Health_Tags_And_Aggregate.md</span></div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <p>Compiled from <span class="mono">/prompts</span> and <span class="mono">/src</span> in the ADAGE CRM Dashboard repository — a documentation view, not a live data connection.</p>
+</footer>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('.navlinks a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+    function onScroll(){
+      var y = window.scrollY + 90;
+      var current = sections[0];
+      sections.forEach(function(s){ if (s && s.offsetTop <= y) current = s; });
+      links.forEach(function(a){
+        a.classList.toggle('active', current && a.getAttribute('href') === '#' + current.id);
+      });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+</body>
+</html>
