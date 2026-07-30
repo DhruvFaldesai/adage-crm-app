@@ -96,7 +96,7 @@ export default function App() {
 
       const [leads, engagements, stages, closedLeads] = await Promise.all([
         fetchOdoo("crm.lead", "search_read", [leadDomain], {
-          fields: ["name","partner_name","partner_id","stage_id","expected_revenue","probability","won_status",
+          fields: ["name","partner_name","partner_id","stage_id","expected_revenue","x_studio_currency","probability","won_status",
             "x_studio_responsible_region_1","x_studio_expected_month","x_studio_expected_year",
             "x_studio_importance_of_lead","x_studio_customer_type","x_studio_industry_type",
             "x_studio_assigned_salesperson","date_deadline","user_id","x_studio_product_info",

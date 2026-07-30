@@ -4,6 +4,7 @@ import { T } from "../constants/theme";
 import { REGION_COLORS, PERSON_COLORS } from "../constants/colors";
 import { fmt, getPersonNames } from "../lib/format";
 import { ODOO_BASE_URL } from "../lib/odoo";
+import { CURRENCY_OPTIONS, FALLBACK_RATES, fetchFxRates, convertAmount, fmtByCurrency } from "../lib/currency";
 import HealthSpeedometer from "../components/HealthSpeedometer";
 import HealthTag, {
   AGGREGATE_TOOLTIP_TEXT,
@@ -505,7 +506,7 @@ function ActivityDetailModal({ engagement, lead, userMap, onClose }) {
           <Field label="Engagement Type" value={engagement.x_studio_engagement_type || "—"} />
           <Field label="Engagement With" value={engagement.x_studio_engagement_with || "—"} />
           <Field label="Assigned To" value={assignedTo} />
-          <Field label="Expected Value" value={lead?.expected_revenue > 0 ? fmt(lead.expected_revenue) : "—"} color={lead?.expected_revenue > 0 ? T.success : T.textMuted} />
+          <Field label="Expected Value" value={lead?.expected_revenue > 0 ? fmtByCurrency(lead.expected_revenue, lead.x_studio_currency || "INR") : "—"} color={lead?.expected_revenue > 0 ? T.success : T.textMuted} />
           <Field label="Region" value={lead?.x_studio_responsible_region_1 || "—"} color={REGION_COLORS[lead?.x_studio_responsible_region_1] || T.textPrimary} />
         </div>
 
@@ -623,7 +624,7 @@ export function LeadCard({ lead, onClose, uniform = false }) {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 10px" }}>
           <Field label="Assigned Salesperson" value={lead.x_studio_assigned_salesperson?.[1]} />
-          <Field label="Deal Value" value={lead.expected_revenue > 0 ? fmt(lead.expected_revenue) : null} color={T.success} />
+          <Field label="Deal Value" value={lead.expected_revenue > 0 ? fmtByCurrency(lead.expected_revenue, lead.x_studio_currency || "INR") : null} color={T.success} />
           <Field label="Closing" value={closingDate || "No date"} color={closingDate ? urg.dateColor : T.textMuted} />
           <Field label="Sales Lead" value={lead.x_studio_sales_lead?.[1]} />
         </div>
@@ -708,7 +709,7 @@ export function LeadCard({ lead, onClose, uniform = false }) {
         <div style={{ display: "grid", gridTemplateColumns: onClose ? "repeat(auto-fit, minmax(140px, 1fr))" : "1fr 1fr", gap: "6px 10px" }}>
           <Field label="Assigned Salesperson" value={lead.x_studio_assigned_salesperson?.[1]} />
           <Field label="Sales Lead" value={lead.x_studio_sales_lead?.[1]} />
-          <Field label="Deal Value" value={lead.expected_revenue > 0 ? fmt(lead.expected_revenue) : null} color={T.success} />
+          <Field label="Deal Value" value={lead.expected_revenue > 0 ? fmtByCurrency(lead.expected_revenue, lead.x_studio_currency || "INR") : null} color={T.success} />
           <Field label="Lead Status" value={lead.x_studio_lead_status} />
           <Field label="Closing" value={closingDate || "No date"} color={closingDate ? urg.dateColor : T.textMuted} />
         </div>
@@ -1000,61 +1001,154 @@ function GreenfieldDonut({ leads, onSegmentClick, activeKey }) {
   return <InteractiveDonut title="Greenfield vs Brownfield" segments={segments} total={total} centerLabel="Total" onSegmentClick={onSegmentClick} activeKey={activeKey} />;
 }
 
+// Segment color per native currency, shown as stacked bar segments in MonthBar.
+const CURRENCY_BAR_COLORS = { INR: T.warning, AED: T.success, USD: "#1E3A8A" };
+const CURRENCY_STACK_ORDER = ["INR", "AED", "USD"];
+
 // ─── MonthBar — owns its own hover state (fixes useState-in-map violation) ────
-function MonthBar({ monthKey, data, isSelected, maxRev, onBarClick }) {
-  const [hovered, setHovered] = useState(false);
+// Each bar is segmented by the native currency of the leads that make it up
+// (orange = INR, green = AED, navy = USD), sized by each segment's share of
+// the month's total (already converted to the selected display currency).
+// Segments are individually clickable (like a donut slice) and show their
+// own amount on hover in place of the month total.
+function MonthBar({ monthKey, data, activeCurrency, isMonthActive, maxRev, onSegmentClick, currency }) {
+  const [hoveredCur, setHoveredCur] = useState(null);
   const maxBarH = 78;
-  const minBarH = 2;
+  const minBarH = 4;
   const safeMax = maxRev > 0 ? maxRev : 1;
-  const scaled = Math.sqrt((data.rev || 0) / safeMax) * (maxBarH - minBarH);
+  const scaled = Math.sqrt((data.total || 0) / safeMax) * (maxBarH - minBarH);
   const barH = Math.max(minBarH, scaled + minBarH);
+
+  const segments = CURRENCY_STACK_ORDER
+    .map((cur) => ({ cur, value: data.byCurrency[cur] || 0 }))
+    .concat(Object.keys(data.byCurrency)
+      .filter((cur) => !CURRENCY_STACK_ORDER.includes(cur))
+      .map((cur) => ({ cur, value: data.byCurrency[cur] })))
+    .filter((s) => s.value > 0);
+
+  const hoveredSeg = hoveredCur ? segments.find((s) => s.cur === hoveredCur) : null;
+  const topLabelColor = hoveredSeg ? (CURRENCY_BAR_COLORS[hoveredSeg.cur] || T.textSecondary) : (isMonthActive ? T.accent : T.textSecondary);
+
   return (
-    <div onClick={() => onBarClick(isSelected ? null : monthKey)}
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, minWidth: 44, flex: 1, cursor: "pointer" }}>
-      <div style={{ fontSize: 10, color: isSelected ? T.accent : T.textSecondary, fontWeight: isSelected ? 800 : 700, whiteSpace: "nowrap" }}>
-        {fmt(data.rev)}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, minWidth: 52, flex: 1 }}>
+      <div style={{ fontSize: 10, color: topLabelColor, fontWeight: isMonthActive || hoveredSeg ? 800 : 700, whiteSpace: "nowrap" }}>
+        {hoveredSeg ? `${hoveredSeg.cur} ${fmtByCurrency(hoveredSeg.value, currency)}` : fmtByCurrency(data.total, currency)}
       </div>
-      <div style={{ width: "100%", height: maxBarH, display: "flex", alignItems: "flex-end" }}>
-        <div style={{ width: "100%", height: barH, minHeight: 4, borderRadius: "4px 4px 0 0", background: isSelected ? T.accent : hovered ? T.accentBdr : "#CBD5E1", transition: "background 0.15s, transform 0.15s", transform: hovered ? "scaleY(1.04)" : "scaleY(1)", transformOrigin: "bottom", outline: isSelected ? `2px solid ${T.accent}` : "none", outlineOffset: 1 }} />
+      <div style={{ width: "100%", height: maxBarH, display: "flex", alignItems: "flex-end", marginTop: 2 }}>
+        <div style={{ width: "100%", height: barH, minHeight: 4, borderRadius: "4px 4px 0 0", overflow: "hidden", display: "flex", flexDirection: "column-reverse" }}>
+          {segments.length === 0
+            ? <div style={{ width: "100%", height: "100%", background: "#CBD5E1" }} />
+            : segments.map(({ cur, value }) => {
+                const isActive = activeCurrency === cur;
+                const dimmed = hoveredCur && hoveredCur !== cur;
+                return (
+                  <div key={cur}
+                    onClick={() => onSegmentClick(monthKey, cur)}
+                    onMouseEnter={() => setHoveredCur(cur)}
+                    onMouseLeave={() => setHoveredCur(null)}
+                    title={`${cur}: ${fmtByCurrency(value, currency)}`}
+                    style={{
+                      width: "100%",
+                      height: `${(value / data.total) * 100}%`,
+                      background: CURRENCY_BAR_COLORS[cur] || "#CBD5E1",
+                      opacity: dimmed ? 0.4 : 1,
+                      boxShadow: isActive ? "inset 0 0 0 2px rgba(255,255,255,0.9)" : "none",
+                      cursor: "pointer",
+                      transition: "opacity 0.15s",
+                    }}
+                  />
+                );
+              })}
+        </div>
       </div>
-      <div style={{ fontSize: 10, color: isSelected ? T.accent : T.textSecondary, fontWeight: isSelected ? 700 : 400, whiteSpace: "nowrap" }}>{data.label}</div>
+      <div style={{ fontSize: 10, color: isMonthActive ? T.accent : T.textSecondary, fontWeight: isMonthActive ? 700 : 400, whiteSpace: "nowrap" }}>{data.label}</div>
     </div>
   );
 }
 
 // ─── Projected Monthly Closings bar chart (clickable drill-down) ──────────────
-function MonthlyClosings({ leads, selectedMonth, onBarClick }) {
+// Each lead carries its own x_studio_currency (INR/AED/USD/...). Bars are
+// segmented by that native currency (converted to the selected display
+// currency for sizing) so the composition of each month is visible at a
+// glance. Each segment is its own clickable drill-down (month + currency),
+// same interaction model as the donut charts elsewhere on this tab.
+function MonthlyClosings({ leads, selectedMonth, selectedCurrency, onSegmentClick }) {
+  const [displayCurrency, setDisplayCurrency] = useState("INR");
+  const [fx, setFx] = useState({ rates: FALLBACK_RATES, live: false, loading: true });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFxRates().then((result) => { if (!cancelled) setFx({ ...result, loading: false }); });
+    return () => { cancelled = true; };
+  }, []);
+
   const monthMap = {};
+  let usedConversion = false;
   leads.forEach(l => {
     if (!l.x_studio_expected_closing) return;
     const [y, m] = l.x_studio_expected_closing.split("T")[0].split("-").map(Number);
     const key = `${y}-${String(m).padStart(2, "0")}`;
-    if (!monthMap[key]) monthMap[key] = { label: `${MONTHS_SHORT[m - 1]} '${String(y).slice(2)}`, rev: 0 };
-    monthMap[key].rev += l.expected_revenue || 0;
+    if (!monthMap[key]) monthMap[key] = { label: `${MONTHS_SHORT[m - 1]} '${String(y).slice(2)}`, total: 0, byCurrency: {} };
+    const amount = l.expected_revenue || 0;
+    const nativeCurrency = (l.x_studio_currency || "INR").toUpperCase();
+    const value = nativeCurrency === displayCurrency ? amount : convertAmount(amount, nativeCurrency, displayCurrency, fx.rates);
+    if (nativeCurrency !== displayCurrency && amount) usedConversion = true;
+    monthMap[key].total += value;
+    monthMap[key].byCurrency[nativeCurrency] = (monthMap[key].byCurrency[nativeCurrency] || 0) + value;
   });
   const entries = Object.entries(monthMap).sort((a, b) => a[0].localeCompare(b[0])).slice(0, 12);
-  const maxRev = Math.max(...entries.map(([, d]) => d.rev), 1);
+  const maxRev = Math.max(...entries.map(([, d]) => d.total), 1);
   return (
     <div className="card" style={{ padding: "14px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8, flexWrap: "wrap" }}>
         <div style={{ fontSize: 10, color: T.textMuted, letterSpacing: "0.8px", textTransform: "uppercase", fontWeight: 700 }}>Projected Closing Revenue</div>
-        {selectedMonth && (
-          <button onClick={() => onBarClick(null)} style={{ fontSize: 11, color: T.accent, background: T.accentBg, border: `1px solid ${T.accentBdr}`, borderRadius: 6, padding: "2px 8px", cursor: "pointer", fontFamily: "inherit" }}>✕ Clear</button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, color: T.textMuted, fontWeight: 600 }}>Show in</span>
+          <FilterSelect
+            value={displayCurrency}
+            onChange={setDisplayCurrency}
+            options={CURRENCY_OPTIONS.map(c => ({ value: c, label: c }))}
+            width={78}
+          />
+          {selectedMonth && (
+            <button onClick={() => onSegmentClick(null, null)} style={{ fontSize: 11, color: T.accent, background: T.accentBg, border: `1px solid ${T.accentBdr}`, borderRadius: 6, padding: "2px 8px", cursor: "pointer", fontFamily: "inherit" }}>✕ Clear</button>
+          )}
+        </div>
       </div>
       {entries.length === 0 ? (
         <div style={{ color: T.textMuted, fontSize: 12, textAlign: "center", padding: "18px 0" }}>No closing revenue in this period.</div>
       ) : (
         <>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 116, overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 120, overflowX: "auto" }}>
             {entries.map(([key, d]) => (
-              <MonthBar key={key} monthKey={key} data={d} isSelected={selectedMonth === key} maxRev={maxRev} onBarClick={onBarClick} />
+              <MonthBar
+                key={key}
+                monthKey={key}
+                data={d}
+                isMonthActive={selectedMonth === key}
+                activeCurrency={selectedMonth === key ? selectedCurrency : null}
+                maxRev={maxRev}
+                onSegmentClick={onSegmentClick}
+                currency={displayCurrency}
+              />
             ))}
           </div>
+          <div style={{ display: "flex", gap: 12, marginTop: 10, fontSize: 10, color: T.textMuted, flexWrap: "wrap" }}>
+            {CURRENCY_STACK_ORDER.map((cur) => (
+              <span key={cur} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: 2, background: CURRENCY_BAR_COLORS[cur], display: "inline-block" }} />
+                {cur}
+              </span>
+            ))}
+          </div>
+          {usedConversion && !fx.live && !fx.loading && (
+            <div style={{ marginTop: 6, fontSize: 10, color: T.textMuted }}>
+              Live FX rates unavailable — conversions use an approximate rate.
+            </div>
+          )}
           {selectedMonth && (
             <div style={{ marginTop: 8, fontSize: 11, color: T.accent, fontWeight: 600 }}>
-              Showing leads closing in {monthMap[selectedMonth]?.label} — scroll down to see them
+              Showing leads closing in {monthMap[selectedMonth]?.label}{selectedCurrency ? ` (${selectedCurrency} only)` : ""} — scroll down to see them
             </div>
           )}
         </>
@@ -1261,7 +1355,7 @@ function ListRow({ lead, activity, userMap, onActivityClick, healthHasCompleted,
       </div>
 
       <div className="col-value">
-          {lead.expected_revenue > 0 ? fmt(lead.expected_revenue) : "—"}
+          {lead.expected_revenue > 0 ? fmtByCurrency(lead.expected_revenue, lead.x_studio_currency || "INR") : "—"}
       </div>
 
       <div>
@@ -1348,6 +1442,7 @@ export function PipelineTab({ leads, engagements = [], userMap = {} }) {
   });
   const [periodFilter, setPeriodFilter] = useState(defaultPeriod);
   const [selectedMonth, setSelectedMonth] = useState(null); // "YYYY-MM" drill-down from bar chart
+  const [selectedMonthCurrency, setSelectedMonthCurrency] = useState(null); // optional currency segment within selectedMonth
   const [donutFilter, setDonutFilter] = useState(null); // { kind: "lead_status" | "region" | "person" | "customer" | "label", key: string }
   const [filterProjectType, setFilterProjectType] = useState(null); // drill from GB donut
   const [searchQuery, setSearchQuery] = useState("");
@@ -1471,6 +1566,7 @@ export function PipelineTab({ leads, engagements = [], userMap = {} }) {
         if (!closing) return false;
         const monthKey = closing.split("T")[0].slice(0, 7); // "YYYY-MM"
         if (monthKey !== selectedMonth) return false;
+        if (selectedMonthCurrency && (l.x_studio_currency || "INR").toUpperCase() !== selectedMonthCurrency) return false;
       }
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -1482,7 +1578,7 @@ export function PipelineTab({ leads, engagements = [], userMap = {} }) {
       }
       return true;
     });
-  }, [leads, filterRegion, statusFilter, filterPerson, filterCustomer, donutFilter, filterProjectType, selectedMonth, searchQuery, dateFrom, dateTo]);
+  }, [leads, filterRegion, statusFilter, filterPerson, filterCustomer, donutFilter, filterProjectType, selectedMonth, selectedMonthCurrency, searchQuery, dateFrom, dateTo]);
 
   // Group + sort
   const groups = useMemo(() => {
@@ -1842,7 +1938,13 @@ export function PipelineTab({ leads, engagements = [], userMap = {} }) {
         <MonthlyClosings
           leads={filteredLeads}
           selectedMonth={selectedMonth}
-          onBarClick={(m) => { setSelectedMonth(m); if (m) handleSetViewMode("list"); }}
+          selectedCurrency={selectedMonthCurrency}
+          onSegmentClick={(m, cur) => {
+            const same = selectedMonth === m && selectedMonthCurrency === cur;
+            setSelectedMonth(same ? null : m);
+            setSelectedMonthCurrency(same ? null : cur);
+            if (!same && m) handleSetViewMode("list");
+          }}
         />
       </div>
 
@@ -1895,8 +1997,8 @@ export function PipelineTab({ leads, engagements = [], userMap = {} }) {
             const label = `${MONTHS_SHORT[sm - 1]} '${String(sy).slice(2)}`;
             return (
               <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600, padding: "3px 10px", borderRadius: 100, background: `${T.accent}18`, color: T.accent, border: `1px solid ${T.accent}40` }}>
-                Closing: {label}
-                <button onClick={() => setSelectedMonth(null)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "inherit", lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
+                Closing: {label}{selectedMonthCurrency ? ` (${selectedMonthCurrency})` : ""}
+                <button onClick={() => { setSelectedMonth(null); setSelectedMonthCurrency(null); }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "inherit", lineHeight: 1, padding: 0, marginLeft: 2 }}>×</button>
               </span>
             );
           })()}
