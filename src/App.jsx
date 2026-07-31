@@ -1,20 +1,15 @@
 import { useState, useEffect, useCallback, Component } from "react";
+import { useMsal } from "@azure/msal-react";
 import { T } from "./constants/theme";
 import { fetchOdoo } from "./lib/odoo";
 import { getPersonName } from "./lib/format";
+import { ALL_COMPANY_NAMES, getAllowedCompanyNames } from "./lib/authConfig";
 import { PipelineTab }       from "./views/PipelineTab";
 import { VisitsTab }         from "./views/VisitsTab";
 import { TeamTab }           from "./views/TeamTab";
 import { CalendarDayPopup }  from "./views/CalendarDayPopup";
 import SwimlaneView          from "./views/SwimlaneView";
 import mainLogo from "./logos/Main Logo.png";
-
-// Only these companies' records should ever appear in this dashboard.
-const ALLOWED_COMPANY_NAMES = [
-  "Adage Automation Private Ltd.",
-  "Adage Kanoo Analytical Industry",
-  "Adage Kanoo Industrial Company",
-];
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -41,6 +36,9 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
+  const { instance, accounts } = useMsal();
+  const account = accounts[0];
+  const email = account?.username;
   const [activeTab, setActiveTab]           = useState("pipeline");
   const [data, setData]                     = useState({ leads: [], engagements: [], stages: [], closedLeads: [] });
   const [loading, setLoading]               = useState(true);
@@ -55,14 +53,17 @@ export default function App() {
     return stored ? Number(stored) : null;
   });
 
-  // ── Company list (fetched once, restricted to the companies this dashboard covers) ──
+  // ── Company list (fetched once, restricted to the companies this dashboard covers,
+  //    then further restricted to the companies the signed-in user is allowed to see) ──
   useEffect(() => {
-    fetchOdoo("res.company", "search_read", [[["name","in", ALLOWED_COMPANY_NAMES]]], { fields: ["id","name"], order: "name asc" })
+    const allowedNames = getAllowedCompanyNames(email);
+    fetchOdoo("res.company", "search_read", [[["name","in", ALL_COMPANY_NAMES]]], { fields: ["id","name"], order: "name asc" })
       .then((list) => {
-        const fetched = list || [];
+        const fetched = (list || []).filter((c) => allowedNames.includes(c.name));
         setCompanies(fetched);
         // Guard against a stale localStorage selection pointing at a company
-        // that's no longer in the allowed set (e.g. removed after a prior session).
+        // that's no longer in the allowed set (e.g. removed after a prior session,
+        // or left over from a different user's session on a shared browser).
         setCompanyId((current) => {
           if (current && !fetched.some((c) => c.id === current)) {
             localStorage.removeItem("adage_crm_company_id");
@@ -72,7 +73,7 @@ export default function App() {
         });
       })
       .catch((err) => console.warn("company list load error:", err));
-  }, []);
+  }, [email]);
 
   const handleCompanyChange = useCallback((e) => {
     const v = e.target.value;
@@ -305,6 +306,21 @@ export default function App() {
             }}>{t.label}</button>
           ))}
           <button onClick={loadData} style={{ marginLeft: 8, background: T.accentBg, border: `1px solid ${T.accentBdr}`, color: T.accent, borderRadius: 8, padding: "7px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.2s" }}>⟳ Refresh</button>
+          {account && (
+            <>
+              <div style={{ width: 1, height: 22, background: T.border, margin: "0 8px" }} />
+              <span style={{ fontSize: 12.5, color: T.textSecondary, fontWeight: 500, maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={account.username}>
+                {account.name || account.username}
+              </span>
+              <button
+                onClick={() => instance.logoutRedirect()}
+                title="Sign out"
+                style={{ marginLeft: 8, background: "transparent", border: `1px solid ${T.border}`, color: T.textSecondary, borderRadius: 8, padding: "7px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600 }}
+              >
+                Sign out
+              </button>
+            </>
+          )}
         </div>
       </div>
 
