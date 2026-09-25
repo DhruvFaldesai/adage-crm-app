@@ -33,23 +33,26 @@ export const ROOT_LABELS = {
   Regret: { text: "Missed Opportunity", splits: true },
 };
 
-export const AGGREGATE_TOOLTIP_TEXT = `Each filtered lead first gets a per-record score based on:
-- expected closing timing: overdue / this week / this month / beyond
-- engagement activity: no activity / planned activity / completed activity
-- manual lost status can mark the lead as Regret
+export const AGGREGATE_TOOLTIP_INTRO =
+  "Each lead first gets its own score based on just 2 things: how close its expected closing date is, and how much sales activity has happened on it.";
 
-That per-record outcome is then mapped to a score out of 100:
-- Poor = 0
-- Between Poor and Average = 16.67
-- Average = 33.33
-- Between Average and Good = 50
-- Good = 66.67
-- Very Good = 83.33
-- Excellent = 100
+export const AGGREGATE_SCORE_TABLE = {
+  columns: ["Closing Date", "No Activity", "Planned", "Completed"],
+  rows: [
+    ["Overdue", "Poor", "Poor", "Between Poor & Average"],
+    ["This week", "Between Poor & Average", "Between Poor & Average", "Average"],
+    ["This month", "Average", "Average", "Between Average & Good"],
+    ["Further out", "Between Average & Good", "Good", "Very Good"],
+  ],
+};
 
-Regretted leads are excluded from the average.
+export const AGGREGATE_TOOLTIP_NOTE =
+  "As soon as a lead converts to an RFQ, it scores Excellent. If a lead has been manually marked as lost (Regret), it skips this scoring and is left out of the average entirely.";
 
-The Overall Prospect Health card then averages the scored leads in the current filtered view and shows the closest matching tier.`;
+export const AGGREGATE_TOOLTIP_MAPPING_INTRO = "That outcome is then mapped to a score out of 100:";
+
+export const AGGREGATE_TOOLTIP_OUTRO =
+  "This card averages the scores of all filtered leads and shows the closest matching tier.";
 
 function normalizeHealth(value) {
   if (value == null) return "";

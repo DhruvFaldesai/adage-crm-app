@@ -7,7 +7,11 @@ import { ODOO_BASE_URL } from "../lib/odoo";
 import { CURRENCY_OPTIONS, FALLBACK_RATES, fetchFxRates, convertAmount, fmtByCurrency } from "../lib/currency";
 import HealthSpeedometer from "../components/HealthSpeedometer";
 import HealthTag, {
-  AGGREGATE_TOOLTIP_TEXT,
+  AGGREGATE_TOOLTIP_INTRO,
+  AGGREGATE_SCORE_TABLE,
+  AGGREGATE_TOOLTIP_NOTE,
+  AGGREGATE_TOOLTIP_MAPPING_INTRO,
+  AGGREGATE_TOOLTIP_OUTRO,
   getClosestHealthTier,
   hasAnyActivity,
   hasCompletedActivity,
@@ -1194,7 +1198,6 @@ function OverallProspectHealthCard({ leads, engagementsByLead }) {
     : null;
 
   const averageLabel = averagePosition == null ? null : getClosestHealthTier(averagePosition);
-  const tooltipText = AGGREGATE_TOOLTIP_TEXT;
 
   return (
     <div className="card" style={{ padding: "14px 14px", display: "flex", flexDirection: "column", minWidth: 0 }}>
@@ -1242,8 +1245,8 @@ function OverallProspectHealthCard({ leads, engagementsByLead }) {
                 position: "absolute",
                 top: "calc(100% + 8px)",
                 right: 0,
-                width: 320,
-                maxWidth: "min(320px, calc(100vw - 40px))",
+                width: 380,
+                maxWidth: "min(380px, calc(100vw - 40px))",
                 background: T.bgCard,
                 border: `1px solid ${T.border}`,
                 borderRadius: 12,
@@ -1255,8 +1258,75 @@ function OverallProspectHealthCard({ leads, engagementsByLead }) {
               <div style={{ fontSize: 10, fontWeight: 800, color: T.textPrimary, marginBottom: 8, letterSpacing: "0.4px", textTransform: "uppercase" }}>
                 How this is calculated
               </div>
-              <div style={{ whiteSpace: "pre-wrap", fontSize: 11, color: T.textSecondary, lineHeight: 1.45 }}>
-                {tooltipText}
+
+              <div style={{ fontSize: 11, color: T.textSecondary, lineHeight: 1.45, marginBottom: 10 }}>
+                {AGGREGATE_TOOLTIP_INTRO}
+              </div>
+
+              <div style={{ overflowX: "auto", marginBottom: 10 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10 }}>
+                  <thead>
+                    <tr>
+                      {AGGREGATE_SCORE_TABLE.columns.map((col) => (
+                        <th
+                          key={col}
+                          style={{
+                            textAlign: "left",
+                            padding: "5px 6px",
+                            background: T.bgInput,
+                            color: T.textMuted,
+                            fontWeight: 700,
+                            fontSize: 9,
+                            letterSpacing: "0.3px",
+                            textTransform: "uppercase",
+                            border: `1px solid ${T.border}`,
+                          }}
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {AGGREGATE_SCORE_TABLE.rows.map((row) => (
+                      <tr key={row[0]}>
+                        {row.map((cell, cellIndex) => (
+                          <td
+                            key={cell + cellIndex}
+                            style={{
+                              padding: "5px 6px",
+                              border: `1px solid ${T.border}`,
+                              color: cellIndex === 0 ? T.textPrimary : T.textSecondary,
+                              fontWeight: cellIndex === 0 ? 700 : 400,
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={{ fontSize: 11, color: T.textSecondary, lineHeight: 1.45, marginBottom: 10 }}>
+                {AGGREGATE_TOOLTIP_NOTE}
+              </div>
+
+              <div style={{ fontSize: 11, color: T.textSecondary, lineHeight: 1.45, marginBottom: 4 }}>
+                {AGGREGATE_TOOLTIP_MAPPING_INTRO}
+              </div>
+              <ul style={{ margin: "0 0 10px", paddingLeft: 16, fontSize: 11, color: T.textSecondary, lineHeight: 1.5 }}>
+                {Object.entries(HEALTH_POSITIONS).map(([tier, score]) => (
+                  <li key={tier}>
+                    {tier} = {score}
+                  </li>
+                ))}
+              </ul>
+
+              <div style={{ fontSize: 11, color: T.textSecondary, lineHeight: 1.45 }}>
+                {AGGREGATE_TOOLTIP_OUTRO}
               </div>
             </div>
           )}
